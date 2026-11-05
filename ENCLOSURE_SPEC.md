@@ -1,64 +1,14 @@
-# CNC 6061-T6 Armor Enclosure and Passive Heatsink
-### Radxa CM-series Compute Module + 55 × 40 mm Nano Carrier
+# CNC 6061-T6 Armor Enclosure with Integrated Heatsink for a Radxa CM Module and 55 × 40 mm Carrier
 
-## 0. Read This First
+## Read this before cutting metal
 
-I can't verify a public mechanical drawing for the "Nano Carrier Board (Cycle 1)". The SoC also differs by module:
+I could not verify a datasheet or mechanical drawing for a "Radxa CM4 + Nano Carrier Board (Cycle 2)". The design below is therefore fully parametric. Every component and port coordinate is a placeholder that you must measure with calipers or take from the board's DXF/STEP before machining. Four points need checking:
 
-* **Radxa CM3** uses the RK3566 (~2–3 W).
-* **Radxa CM5** uses the RK3588S (~6–8 W sustained, 10 W+ peak).
+1. **55 × 40 mm is the CM4 module form factor**, not a typical carrier size. Radxa CM3 (RK3566) and Radxa CM5 (RK3588S) both use this footprint. The CM4-standard mounting holes are 3.5 mm in from each edge, on a 48 × 33 mm pattern. The code uses these values.
+2. **Port-height conflict.** If the carrier really is the same 55 × 40 mm size, a stacked module covers the carrier's whole top surface. An RJ45 jack (about 13.5 mm tall) can't fit under a module that sits on a 1.5 mm board-to-board connector. The ports must then be on the carrier's underside, or the carrier overhangs the module. The code handles both cases: each port's Z position is set relative to the carrier's top surface and can be negative.
+3. **RK3566 and RK3588 are different modules** with different layouts and power levels (about 2–4 W vs. 6–12 W). Two presets are included. The thermal section shows that the RK3588 needs more than a palm-sized passive heatsink for sustained full load.
+4. **The aluminum shell will kill onboard Wi-Fi/BT.** Plan a U.FL to SMA bulkhead (a cutout is provided).
 
-The design below is fully parametric. The 55 × 40 mm outline and 4× M2.5 holes follow the CM4 form-factor convention (3.5 mm inset, 48 × 33 mm pattern). The following values are placeholders. **Measure them with calipers or take them from the Radxa DXF/STEP before cutting metal:**
+---
 
-* SoC, LPDDR4 and PMIC X/Y positions and heights
-* Port positions
-* Board-to-board (B2B) stack height
-
-## 1. Mechanical Architecture
-
-```
-        ┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐   ← longitudinal fins (lid, 1 piece)
-        ├─┴─┴─┴─┴─┴─┴─┴─┴─┴─┤   ← lid plate 3 mm
-        │ ▼SoC  ▼DDR  ▼PMIC  │   ← stepped pedestals (individual heights)
-        │ ═══ CM module ═══  │   ← hard-stop bosses land on CM at the 4 holes
-        │ ─── carrier ─────  │
-        │ ▲              ▲   │   ← floor standoffs (M2.5 tapped)
-        └────────────────────┘   ← bottom tub with port cut-outs
-```
-
-* **Coaxial clamping:**
-  * One M2.5 × 25 screw per corner passes through the lid boss, CM, spacer and carrier, and threads into the floor standoff.
-  * The lid bosses are machined to bottom out exactly on the CM top surface. **Pad compression is therefore set by machining tolerance, not screw torque.** That is the only reliable way to hold a 0.5 mm compression.
-* **Thermal pad spec:**
-  * Pad thickness `pad_t` = 1.0 mm, compressed by 0.5 mm, leaving a 0.5 mm final gap.
-  * That is 50 % compression, so use a **soft pad** (Shore 00 ≤ 40, e.g. Gelid GP-Ultimate, Fujipoly XR-e soft grade).
-  * For stiffer pads, set `pad_t = 1.5` and keep 0.5 mm compression (33 %).
-* **Pedestal heights differ per chip** (the "stepped" requirement). Each one computes from chip height + module stack.
-
-## 2. OpenSCAD Code
-
-```openscad
-// =====================================================================
-//  Radxa CM + Nano Carrier – CNC 6061-T6 Armor Enclosure / Heatsink
-//  Units: mm.   Z = 0 at BOTTOM face of carrier PCB.
-//  Render: set PART = "bottom" | "lid" | "assembly"
-// =====================================================================
-PART = "assembly";
-$fn  = 48;
-
-// ---------------- Carrier board ----------------
-pcb_l      = 55.0;
-pcb_w      = 40.0;
-pcb_t      = 1.6;
-hole_inset = 3.5;              // CM4-style pattern 48 x 33
-hole_clear = 2.75;             // M2.5 clearance
-tap_d      = 2.05;             // M2.5 tap drill (or 3.6 for heat-set/helicoil)
-bot_clear  = 3.0;              // clearance for bottom-side parts
-
-// ---------------- Compute module stack ----------------
-b2b_stack  = 1.5;              // mated B2B connector height (MEASURE: 1.5 or 3.0)
-cm_t       = 1.2;              // CM PCB thickness (MEASURE)
-cm_top     = pcb_t + b2b_stack + cm_t;
-
-// ---------------- Thermal interface ----------------
-pad_
+## 1. Design archit
